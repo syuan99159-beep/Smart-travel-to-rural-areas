@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>農村活動推薦系統 MVP</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <p class="eyebrow">Flask + SQLite + Vanilla JS</p>
+      <h1>農村活動推薦系統 MVP</h1>
+      <p class="subtitle">先完成篩選、資料庫、排程、假車程與 LINE 固定格式查詢。</p>
+    </div>
+  </header>
+
+  <main class="container layout">
+    <section class="card">
+      <h2>條件篩選</h2>
+      <form id="filter-form" class="grid-form">
+        <label>地區
+          <select name="region">
+            <option value="">全部</option>
+            <option value="小半天">小半天</option>
+            <option value="大雁">大雁</option>
+            <option value="糯米橋">糯米橋</option>
+          </select>
+        </label>
+        <label>活動類型
+          <select name="activity_type">
+            <option value="">全部</option>
+            <option value="DIY">DIY</option>
+            <option value="親子">親子</option>
+            <option value="食農教育">食農教育</option>
+            <option value="生態導覽">生態導覽</option>
+            <option value="戶外">戶外</option>
+            <option value="咖啡">咖啡</option>
+          </select>
+        </label>
+        <label>行程長度
+          <select name="itinerary_length">
+            <option value="full_day">一日</option>
+            <option value="half_day">半日</option>
+          </select>
+        </label>
+        <label>活動停留時間
+          <select name="stay_level">
+            <option value="">全部</option>
+            <option value="短">短</option>
+            <option value="中">中</option>
+            <option value="長">長</option>
+          </select>
+        </label>
+        <label>預算
+          <select name="budget_level">
+            <option value="">全部</option>
+            <option value="低">低</option>
+            <option value="中">中</option>
+            <option value="高">高</option>
+          </select>
+        </label>
+        <label>室內 / 戶外
+          <select name="indoor_outdoor">
+            <option value="">全部</option>
+            <option value="室內">室內</option>
+            <option value="戶外">戶外</option>
+            <option value="混合">混合</option>
+          </select>
+        </label>
+        <label>用餐點
+          <select name="can_eat">
+            <option value="">全部</option>
+            <option value="1">可用餐</option>
+            <option value="0">不可用餐</option>
+          </select>
+        </label>
+        <label>用餐類型
+          <select name="meal_type">
+            <option value="">全部</option>
+            <option value="午餐">午餐</option>
+            <option value="晚餐">晚餐</option>
+            <option value="點心">點心</option>
+            <option value="無">無</option>
+          </select>
+        </label>
+        <label class="full-width">關鍵字
+          <input name="keyword" placeholder="例如：茶園、咖啡、手作">
+        </label>
+        <button type="submit">查詢景點</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="section-head">
+        <h2>景點清單</h2>
+        <span id="spot-count">0 筆</span>
+      </div>
+      <div id="spot-list" class="spot-list"></div>
+    </section>
+
+    <section class="card">
+      <h2>產生行程</h2>
+      <form id="itinerary-form" class="grid-form">
+        <label>開始時間
+          <input type="time" name="start_time" value="09:00" required>
+        </label>
+        <label>結束時間
+          <input type="time" name="end_time" value="17:00" required>
+        </label>
+        <label>起點
+          <input name="origin" value="學校或住家" required>
+        </label>
+        <button type="submit">自動排程</button>
+      </form>
+      <div id="itinerary-result" class="result-box"></div>
+    </section>
+
+    <section class="card">
+      <h2>LINE 固定格式測試</h2>
+      <form id="line-form" class="grid-form">
+        <label class="full-width">輸入文字
+          <input name="line_text" placeholder="親子 一日 不要戶外" required>
+        </label>
+        <button type="submit">解析並推薦</button>
+      </form>
+      <div id="line-result" class="result-box"></div>
+    </section>
+  </main>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

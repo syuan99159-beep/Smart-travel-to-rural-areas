@@ -1,0 +1,18 @@
+# Example render.yaml for deploying the Flask backend to Render.com
+# Edit name, region, and env vars as needed. Do NOT commit real secrets.
+services:
+  - type: web
+    name: ruralsite-backend
+    env: python
+    plan: free
+    region: oregon
+    buildCommand: "pip install -r backend/requirements.txt"
+    startCommand: "gunicorn app:app --bind 0.0.0.0:$PORT"
+    autoDeploy: true
+    envVars:
+      - key: CORS_ORIGINS
+        value: "*"
+      - key: USE_REAL_MAPS
+        value: "false"
+      - key: GOOGLE_MAPS_API_KEY
+        value: ""

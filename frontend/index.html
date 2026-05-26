@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>農村活動推薦與智慧問答系統</title>
+  <meta name="description" content="農村活動推薦與智慧問答系統第一版首頁，提供活動篩選、推薦卡片、智慧行程助理、熱門主題與最新消息。">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="page-shell">
+    <aside class="sidebar" aria-label="側邊導覽列">
+      <div class="brand">
+        <img data-asset="assets/icons/app-logo.png" alt="農村活動推薦與智慧問答系統標誌" class="brand-mark">
+        <div>
+          <h1>農村活動推薦<br>與智慧問答系統</h1>
+          <p>第一版首頁 UI</p>
+        </div>
+      </div>
+
+      <nav class="nav-menu">
+        <a class="nav-item active" href="#home">首頁</a>
+        <a class="nav-item" href="#recommend">活動推薦</a>
+        <a class="nav-item" href="#assistant">智慧問答</a>
+        <a class="nav-item" href="#topics">熱門主題</a>
+        <a class="nav-item" href="#news">最新消息</a>
+      </nav>
+
+      <div class="sidebar-note">
+        <p class="label">系統定位</p>
+        <p>之後可串接 Flask API、LINE Bot、Gemini 與 Google Maps。</p>
+      </div>
+    </aside>
+
+    <main class="main-content" id="home">
+      <header class="topbar">
+        <div class="greeting">
+          <span class="leaf-icon" aria-hidden="true">🌿</span>
+          <div>
+            <p class="topbar-kicker">您好，歡迎回來！</p>
+            <h2>探索農村之美，體驗在地生活</h2>
+          </div>
+        </div>
+
+        <div class="topbar-meta" aria-label="狀態資訊">
+          <span id="currentDateTime" aria-label="目前日期時間">載入中...</span>
+          <span>⛅ 25°C 多雲時晴</span>
+          <span>📍 台灣</span>
+          <span class="topbar-icon">🔔</span>
+          <span class="avatar">U</span>
+        </div>
+      </header>
+
+      <section class="hero card-panel">
+        <div class="hero-copy">
+          <p class="section-tag">農村活動推薦與智慧問答系統</p>
+          <h3>發現特色活動、深入在地故事，讓每次旅行都充滿意義</h3>
+          <p class="hero-desc">先以靜態首頁建立專題展示版型，後續可直接接 Flask API、LINE、Gemini 與 Google Maps。</p>
+
+          <div class="search-box" role="search" aria-label="搜尋活動區">
+            <input id="searchInput" type="search" placeholder="搜尋活動、地點或關鍵字..." aria-label="搜尋活動、地點或關鍵字">
+            <button id="searchButton" type="button">搜尋</button>
+          </div>
+
+          <div class="quick-tags" aria-label="快捷條件">
+            <button class="tag active" type="button" data-quick-filter="親子">親子體驗</button>
+            <button class="tag" type="button" data-quick-filter="農事">農事體驗</button>
+            <button class="tag" type="button" data-quick-filter="文化">文化導覽</button>
+            <button class="tag" type="button" data-quick-filter="手作">手作DIY</button>
+            <button class="tag" type="button" data-quick-filter="生態">生態之旅</button>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <img data-asset="assets/images/banners/hero-banner.png" alt="農村風景插畫">
+        </div>
+      </section>
+
+      <section class="filters card-panel" aria-label="條件篩選區">
+        <div class="section-head">
+          <div>
+            <p class="section-tag">搜尋活動區</p>
+            <h3>條件篩選</h3>
+          </div>
+          <p class="section-hint">清楚區分行程長度與活動停留時間，方便後續串接行程規劃。</p>
+        </div>
+
+        <div class="filter-grid">
+          <label>
+            <span>地區</span>
+            <select id="regionFilter">
+              <option value="all">全部地區</option>
+              <option value="小半天">小半天</option>
+              <option value="大雁">大雁</option>
+              <option value="糯米橋">糯米橋</option>
+            </select>
+          </label>
+          <label>
+            <span>行程長度</span>
+            <select id="durationFilter">
+              <option value="all">全部</option>
+              <option value="半日">半日</option>
+              <option value="一日">一日</option>
+            </select>
+          </label>
+          <label>
+            <span>活動類型</span>
+            <select id="typeFilter">
+              <option value="all">全部</option>
+              <option value="親子">親子</option>
+              <option value="DIY">DIY</option>
+              <option value="食農教育">食農教育</option>
+              <option value="生態之旅">生態之旅</option>
+              <option value="戶外">戶外</option>
+              <option value="文化導覽">文化導覽</option>
+              <option value="在地美食">在地美食</option>
+            </select>
+          </label>
+          <label>
+            <span>活動停留時間</span>
+            <select id="stayFilter">
+              <option value="all">全部</option>
+              <option value="短">短</option>
+              <option value="中">中</option>
+              <option value="長">長</option>
+            </select>
+          </label>
+          <label>
+            <span>室內 / 戶外</span>
+            <select id="spaceFilter">
+              <option value="all">全部</option>
+              <option value="室內">室內</option>
+              <option value="戶外">戶外</option>
+              <option value="混合">混合</option>
+            </select>
+          </label>
+          <label>
+            <span>預算</span>
+            <select id="budgetFilter">
+              <option value="all">全部</option>
+              <option value="低">低</option>
+              <option value="中">中</option>
+              <option value="高">高</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="filter-actions">
+          <button id="generateItineraryButton" class="primary-button" type="button">產生行程</button>
+          <button id="resetFilters" class="ghost-button" type="button">清除條件</button>
+          <div class="filter-summary" id="filterSummary">目前顯示全部推薦活動</div>
+        </div>
+
+        <div class="itinerary-config">
+          <label>
+            <span>開始時間</span>
+            <input id="itineraryStartTime" type="time" value="09:00">
+          </label>
+          <label>
+            <span>結束時間</span>
+            <input id="itineraryEndTime" type="time" value="17:00">
+          </label>
+          <label class="full-width">
+            <span>起點</span>
+            <input id="itineraryStartPoint" type="text" value="南投車站" placeholder="例如：南投車站">
+          </label>
+        </div>
+      </section>
+
+      <section class="content-grid" id="recommend">
+        <div class="recommendation-panel card-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-tag">推薦活動</p>
+              <h3>推薦活動卡片</h3>
+            </div>
+            <a href="#" class="text-link" id="viewMoreLink">查看更多</a>
+          </div>
+
+          <div class="activity-grid" id="activityGrid" aria-live="polite"></div>
+        </div>
+
+        <aside class="assistant-panel card-panel" id="assistant">
+          <div class="section-head compact">
+            <div>
+              <p class="section-tag">智慧問答</p>
+              <h3>智慧行程助理</h3>
+            </div>
+            <span class="assistant-badge">Demo</span>
+          </div>
+
+          <p class="assistant-subtitle">先用假資料展示對話格式，之後可直接接 LINE、Gemini 與 Flask API。</p>
+
+          <div class="chat-window" aria-label="智慧行程助理對話區">
+            <div class="chat-message user-message">
+              <span class="chat-role">使用者</span>
+              <p>親子 一日 不要戶外</p>
+            </div>
+            <div class="chat-message bot-message" id="assistantReply">
+              <span class="chat-role">系統</span>
+              <p>09:00 茶園導覽、11:30 午餐、13:00 手作 DIY、15:30 回程</p>
+            </div>
+          </div>
+
+          <div class="assistant-presets">
+            <button type="button" class="preset-button" data-preset="親子 一日 不要戶外">親子 一日 不要戶外</button>
+            <button type="button" class="preset-button" data-preset="DIY 半日 小半天">DIY 半日 小半天</button>
+            <button type="button" class="preset-button" data-preset="大雁 一日 咖啡">大雁 一日 咖啡</button>
+          </div>
+
+          <div class="assistant-footer">
+            <input id="assistantInput" type="text" placeholder="輸入您的需求，例如：親子 一日 不要戶外">
+            <button id="assistantSend" type="button">送出</button>
+          </div>
+        </aside>
+      </section>
+
+      <section class="card-panel itinerary-panel" id="itinerary">
+        <div class="section-head">
+          <div>
+            <p class="section-tag">行程排程</p>
+            <h3>自動排程結果</h3>
+          </div>
+          <span class="assistant-badge">Rules</span>
+        </div>
+
+        <div id="itineraryResult" class="itinerary-result">
+          <div class="empty-state">
+            <h4>尚未產生行程</h4>
+            <p>設定條件後，按下「產生行程」即可顯示半日或一日的排程時間表。</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="bottom-grid">
+        <div class="card-panel topics-panel" id="topics">
+          <div class="section-head">
+            <div>
+              <p class="section-tag">熱門主題</p>
+              <h3>熱門主題</h3>
+            </div>
+            <a href="#" class="text-link">查看更多</a>
+          </div>
+
+          <div class="topic-grid">
+            <button class="topic-chip active" type="button">農事體驗</button>
+            <button class="topic-chip" type="button">在地美食</button>
+            <button class="topic-chip" type="button">文化導覽</button>
+            <button class="topic-chip" type="button">生態旅遊</button>
+            <button class="topic-chip" type="button">手作DIY</button>
+          </div>
+        </div>
+
+        <div class="card-panel news-panel" id="news">
+          <div class="section-head">
+            <div>
+              <p class="section-tag">最新消息</p>
+              <h3>最新消息</h3>
+            </div>
+            <a href="#" class="text-link">查看更多</a>
+          </div>
+
+          <ul class="news-list">
+            <li>
+              <span class="news-date" data-news-offset="0">載入中...</span>
+              <p><strong>農村特色活動推薦系統</strong> 正式進入首頁 UI 展示版。</p>
+            </li>
+            <li>
+              <span class="news-date" data-news-offset="5">載入中...</span>
+              <p>智慧問答與行程推薦模組已完成前端樣式規劃。</p>
+            </li>
+            <li>
+              <span class="news-date" data-news-offset="10">載入中...</span>
+              <p>後續將串接 Flask API、Google Maps、LINE Bot 與 Gemini。</p>
+            </li>
+          </ul>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <template id="activityCardTemplate">
+    <article class="activity-card">
+      <div class="activity-image-wrap">
+        <img class="activity-image" src="" alt="活動圖片">
+        <span class="activity-badge">推薦</span>
+      </div>
+      <div class="activity-body">
+        <div class="activity-meta">
+          <span class="activity-type"></span>
+          <span class="activity-region"></span>
+        </div>
+        <h4 class="activity-title"></h4>
+        <p class="activity-desc"></p>
+        <div class="activity-tags">
+          <span class="activity-tag stay-time"></span>
+          <span class="activity-tag meal-state"></span>
+        </div>
+      </div>
+    </article>
+  </template>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
