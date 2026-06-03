@@ -3,6 +3,7 @@ const spotCountEl = document.getElementById('spot-count');
 const itineraryResultEl = document.getElementById('itinerary-result');
 const assistantResultEl = document.getElementById('assistant-result');
 const lineResultEl = document.getElementById('line-result');
+const API_BASE_URL =  "https://smart-travel-to-rural-areas.onrender.com";
 
 function formToQueryString(form) {
   const data = new FormData(form);
@@ -40,7 +41,7 @@ function renderSpots(spots) {
 }
 
 async function loadSpots(queryString = '') {
-  const response = await fetch(`/api/spots${queryString ? `?${queryString}` : ''}`);
+  const response = await fetch(`${API_BASE_URL}/api/spots${queryString ? `?${queryString}` : ''}`);
   const data = await response.json();
   renderSpots(data.data || []);
 }
@@ -93,7 +94,7 @@ document.getElementById('itinerary-form').addEventListener('submit', async (even
     payload[key] = value;
   }
 
-  const response = await fetch('/api/itineraries/generate', {
+  const response = await fetch(`${API_BASE_URL}/api/itineraries/generate`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -119,7 +120,7 @@ document.getElementById('assistant-form').addEventListener('submit', async (even
     preferences,
   };
 
-  const response = await fetch('/api/assistant/message', {
+  const response = await fetch(`${API_BASE_URL}/api/assistant/message`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -131,7 +132,7 @@ document.getElementById('assistant-form').addEventListener('submit', async (even
 document.getElementById('line-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   const formData = new FormData(event.currentTarget);
-  const response = await fetch('/api/line/webhook', {
+  const response = await fetch(`${API_BASE_URL}/api/line/webhook`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ text: formData.get('line_text') }),
