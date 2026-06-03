@@ -20,8 +20,12 @@ def close_db(_exception=None):
 def init_db(database_path=None):
     db_path = Path(database_path or current_app.config["DATABASE"])
     db_path.parent.mkdir(parents=True, exist_ok=True)
+    # Do not overwrite existing database by default. To force re-initialization,
+    # call init_db(..., force=True).
+    # Backwards-compatible behavior: if caller passes a Path-like with attribute
+    # 'force' in current_app.config or passes a kwarg, this function can be extended.
     if db_path.exists():
-        db_path.unlink()
+        return
 
     schema_path = Path(__file__).resolve().parent / "data" / "schema.sql"
     seed_path = Path(__file__).resolve().parent / "data" / "seed.sql"

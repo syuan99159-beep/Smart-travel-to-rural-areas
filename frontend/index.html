@@ -6,6 +6,7 @@
   <title>農村活動推薦與智慧問答系統</title>
   <meta name="description" content="農村活動推薦與智慧問答系統第一版首頁，提供活動篩選、推薦卡片、智慧行程助理、熱門主題與最新消息。">
   <link rel="stylesheet" href="css/style.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 </head>
 <body>
   <div class="page-shell">
@@ -14,7 +15,6 @@
         <img data-asset="assets/icons/app-logo.png" alt="農村活動推薦與智慧問答系統標誌" class="brand-mark">
         <div>
           <h1>農村活動推薦<br>與智慧問答系統</h1>
-          <p>第一版首頁 UI</p>
         </div>
       </div>
 
@@ -22,14 +22,10 @@
         <a class="nav-item active" href="#home">首頁</a>
         <a class="nav-item" href="#recommend">活動推薦</a>
         <a class="nav-item" href="#assistant">智慧問答</a>
-        <a class="nav-item" href="#topics">熱門主題</a>
+        <!-- 熱門主題 已移除 -->
         <a class="nav-item" href="#news">最新消息</a>
       </nav>
 
-      <div class="sidebar-note">
-        <p class="label">系統定位</p>
-        <p>之後可串接 Flask API、LINE Bot、Gemini 與 Google Maps。</p>
-      </div>
     </aside>
 
     <main class="main-content" id="home">
@@ -44,10 +40,7 @@
 
         <div class="topbar-meta" aria-label="狀態資訊">
           <span id="currentDateTime" aria-label="目前日期時間">載入中...</span>
-          <span>⛅ 25°C 多雲時晴</span>
           <span>📍 台灣</span>
-          <span class="topbar-icon">🔔</span>
-          <span class="avatar">U</span>
         </div>
       </header>
 
@@ -55,7 +48,7 @@
         <div class="hero-copy">
           <p class="section-tag">農村活動推薦與智慧問答系統</p>
           <h3>發現特色活動、深入在地故事，讓每次旅行都充滿意義</h3>
-          <p class="hero-desc">先以靜態首頁建立專題展示版型，後續可直接接 Flask API、LINE、Gemini 與 Google Maps。</p>
+          
 
           <div class="search-box" role="search" aria-label="搜尋活動區">
             <input id="searchInput" type="search" placeholder="搜尋活動、地點或關鍵字..." aria-label="搜尋活動、地點或關鍵字">
@@ -76,7 +69,78 @@
         </div>
       </section>
 
-      <section class="filters card-panel" aria-label="條件篩選區">
+      <section class="content-grid" id="recommend">
+        <div class="recommendation-panel card-panel">
+          <div class="section-head">
+            <div>
+              <p class="section-tag">推薦活動</p>
+              <h3>推薦活動卡片</h3>
+            </div>
+          </div>
+
+          <div class="activity-grid" id="activityGrid" aria-live="polite"></div>
+          <div class="recommend-controls" id="recommendControls" aria-hidden="false">
+            <button class="page-button" id="recommendPrev" aria-label="上一頁">◀</button>
+            <div class="page-dots" id="recommendDots" role="tablist" aria-label="頁碼"></div>
+            <button class="page-button" id="recommendNext" aria-label="下一頁">▶</button>
+          </div>
+        </div>
+
+        <aside class="assistant-panel card-panel" id="assistant">
+          <div class="section-head compact">
+            <div>
+              <p class="section-tag">智慧問答</p>
+              <h3>智慧行程助理</h3>
+            </div>
+          </div>
+
+          
+
+          <div class="chat-window" aria-label="智慧行程助理對話區">
+            <!-- conversation history (empty) -->
+          </div>
+
+          <div class="assistant-presets">
+            <button type="button" class="preset-button" data-preset="親子 一日 不要戶外">親子 一日 不要戶外</button>
+            <button type="button" class="preset-button" data-preset="DIY 半日 小半天">DIY 半日 小半天</button>
+            <button type="button" class="preset-button" data-preset="大雁 一日 咖啡">大雁 一日 咖啡</button>
+          </div>
+
+          <div class="itinerary-config">
+            <label>
+              <span>出發地址</span>
+              <input id="tripOrigin" type="text" placeholder="例如：台中科技大學">
+            </label>
+            <label>
+              <span>出發日期</span>
+              <input id="tripStartDate" type="date">
+            </label>
+            <label>
+              <span>出發時間</span>
+              <input id="tripStartTime" type="time" value="09:00">
+            </label>
+            <label>
+              <span>結束日期</span>
+              <input id="tripEndDate" type="date">
+            </label>
+            <label>
+              <span>結束時間</span>
+              <input id="tripEndTime" type="time" value="17:00">
+            </label>
+          </div>
+
+          <div class="assistant-footer">
+            <input id="assistantInput" type="text" placeholder="輸入您的需求，例如：親子 一日 不要戶外">
+            <button id="assistantSend" type="button">送出</button>
+          </div>
+          <div class="assistant-response">
+            <div class="assistant-response-header">系統回應</div>
+            <div id="assistantReply" class="chat-message bot-message"></div>
+          </div>
+        </aside>
+      </section>
+
+      <section class="filters card-panel" aria-label="條件篩選區" style="display:none;">
         <div class="section-head">
           <div>
             <p class="section-tag">搜尋活動區</p>
@@ -151,71 +215,9 @@
           <div class="filter-summary" id="filterSummary">目前顯示全部推薦活動</div>
         </div>
 
-        <div class="itinerary-config">
-          <label>
-            <span>開始時間</span>
-            <input id="itineraryStartTime" type="time" value="09:00">
-          </label>
-          <label>
-            <span>結束時間</span>
-            <input id="itineraryEndTime" type="time" value="17:00">
-          </label>
-          <label class="full-width">
-            <span>起點</span>
-            <input id="itineraryStartPoint" type="text" value="南投車站" placeholder="例如：南投車站">
-          </label>
-        </div>
       </section>
 
-      <section class="content-grid" id="recommend">
-        <div class="recommendation-panel card-panel">
-          <div class="section-head">
-            <div>
-              <p class="section-tag">推薦活動</p>
-              <h3>推薦活動卡片</h3>
-            </div>
-            <a href="#" class="text-link" id="viewMoreLink">查看更多</a>
-          </div>
-
-          <div class="activity-grid" id="activityGrid" aria-live="polite"></div>
-        </div>
-
-        <aside class="assistant-panel card-panel" id="assistant">
-          <div class="section-head compact">
-            <div>
-              <p class="section-tag">智慧問答</p>
-              <h3>智慧行程助理</h3>
-            </div>
-            <span class="assistant-badge">Demo</span>
-          </div>
-
-          <p class="assistant-subtitle">先用假資料展示對話格式，之後可直接接 LINE、Gemini 與 Flask API。</p>
-
-          <div class="chat-window" aria-label="智慧行程助理對話區">
-            <div class="chat-message user-message">
-              <span class="chat-role">使用者</span>
-              <p>親子 一日 不要戶外</p>
-            </div>
-            <div class="chat-message bot-message" id="assistantReply">
-              <span class="chat-role">系統</span>
-              <p>09:00 茶園導覽、11:30 午餐、13:00 手作 DIY、15:30 回程</p>
-            </div>
-          </div>
-
-          <div class="assistant-presets">
-            <button type="button" class="preset-button" data-preset="親子 一日 不要戶外">親子 一日 不要戶外</button>
-            <button type="button" class="preset-button" data-preset="DIY 半日 小半天">DIY 半日 小半天</button>
-            <button type="button" class="preset-button" data-preset="大雁 一日 咖啡">大雁 一日 咖啡</button>
-          </div>
-
-          <div class="assistant-footer">
-            <input id="assistantInput" type="text" placeholder="輸入您的需求，例如：親子 一日 不要戶外">
-            <button id="assistantSend" type="button">送出</button>
-          </div>
-        </aside>
-      </section>
-
-      <section class="card-panel itinerary-panel" id="itinerary">
+      <section class="card-panel itinerary-panel" id="itinerary" style="display:none;">
         <div class="section-head">
           <div>
             <p class="section-tag">行程排程</p>
@@ -233,23 +235,7 @@
       </section>
 
       <section class="bottom-grid">
-        <div class="card-panel topics-panel" id="topics">
-          <div class="section-head">
-            <div>
-              <p class="section-tag">熱門主題</p>
-              <h3>熱門主題</h3>
-            </div>
-            <a href="#" class="text-link">查看更多</a>
-          </div>
-
-          <div class="topic-grid">
-            <button class="topic-chip active" type="button">農事體驗</button>
-            <button class="topic-chip" type="button">在地美食</button>
-            <button class="topic-chip" type="button">文化導覽</button>
-            <button class="topic-chip" type="button">生態旅遊</button>
-            <button class="topic-chip" type="button">手作DIY</button>
-          </div>
-        </div>
+        <!-- 熱門主題已移除，最新消息將拉寬顯示 -->
 
         <div class="card-panel news-panel" id="news">
           <div class="section-head">
@@ -257,23 +243,20 @@
               <p class="section-tag">最新消息</p>
               <h3>最新消息</h3>
             </div>
-            <a href="#" class="text-link">查看更多</a>
+            <a href="https://travel.nantou.gov.tw/category/news-press/" class="text-link" target="_blank" rel="noreferrer noopener">查看更多</a>
           </div>
 
-          <ul class="news-list">
-            <li>
-              <span class="news-date" data-news-offset="0">載入中...</span>
-              <p><strong>農村特色活動推薦系統</strong> 正式進入首頁 UI 展示版。</p>
-            </li>
-            <li>
-              <span class="news-date" data-news-offset="5">載入中...</span>
-              <p>智慧問答與行程推薦模組已完成前端樣式規劃。</p>
-            </li>
-            <li>
-              <span class="news-date" data-news-offset="10">載入中...</span>
-              <p>後續將串接 Flask API、Google Maps、LINE Bot 與 Gemini。</p>
+          <ul class="news-list" id="latestNewsList">
+            <li class="news-loading">
+              <span class="news-date">載入中...</span>
+              <p>正在抓取南投旅遊網最新消息。</p>
             </li>
           </ul>
+          <div class="news-controls" id="newsControls" aria-hidden="false">
+            <button class="page-button" id="newsPrev" aria-label="上一頁">◀</button>
+            <div class="page-dots" id="newsDots" role="tablist" aria-label="最新消息頁碼"></div>
+            <button class="page-button" id="newsNext" aria-label="下一頁">▶</button>
+          </div>
         </div>
       </section>
     </main>
@@ -283,7 +266,7 @@
     <article class="activity-card">
       <div class="activity-image-wrap">
         <img class="activity-image" src="" alt="活動圖片">
-        <span class="activity-badge">推薦</span>
+        <span class="activity-badge category-badge"></span>
       </div>
       <div class="activity-body">
         <div class="activity-meta">
@@ -295,6 +278,7 @@
         <div class="activity-tags">
           <span class="activity-tag stay-time"></span>
           <span class="activity-tag meal-state"></span>
+          <span class="activity-keywords"></span>
         </div>
       </div>
     </article>

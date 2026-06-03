@@ -1,0 +1,22 @@
+Total spots in DB: 30
+Distinct names in DB: 30
+Intended names collected from previews: 19
+Existing among intended: 16
+Missing count: 3
+
+Missing names:
+- pattern=%茶%
+- 果香採摘
+- 梅花香韻
+
+After reinsertion, total spots in DB: 33
+After reinsertion, distinct names in DB: 33
+Reinserted count: 3
+Reinserted names:
+- pattern=%茶%
+- 果香採摘
+- 梅花香韻
+
+Rows with NULL/empty name: 0
+
+Duplicate name groups: 0

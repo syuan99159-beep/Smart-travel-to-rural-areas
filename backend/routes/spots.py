@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from models.spot_model import get_spot_by_id, list_spots
+from services.agritourism_service import import_agritourism
 
 spots_bp = Blueprint("spots", __name__)
 
@@ -27,4 +28,14 @@ def api_get_spot(spot_id):
     if not spot:
         return jsonify({"success": False, "error": "spot not found"}), 404
     return jsonify(spot)
+
+
+@spots_bp.post('/spots/import/agritourism')
+def api_import_agritourism():
+    try:
+        imported = import_agritourism()
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e), 'data': []}), 502
+
+    return jsonify({'success': True, 'data': imported})
 

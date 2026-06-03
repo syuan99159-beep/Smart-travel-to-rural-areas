@@ -1,8 +1,12 @@
 // API base selection
 // If window.__API_BASE__ is set (via hosting or a build), use that.
 // If running on localhost, default to local Flask backend.
-const _API_BASE_RAW = (window.__API_BASE__ !== undefined) ? window.__API_BASE__ : (location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? 'http://127.0.0.1:5003' : '');
+const _API_BASE_RAW = (window.__API_BASE__ !== undefined) ? window.__API_BASE__ : (location.hostname === 'localhost' || location.hostname === '127.0.0.1' ? 'http://127.0.0.1:5004' : '');
 const API_BASE = _API_BASE_RAW ? _API_BASE_RAW.replace(/\/$/, '') : '';
+
+if (window.marked && window.marked.setOptions) {
+  window.marked.setOptions({ breaks: true });
+}
 
 function apiUrl(path) {
   // path should start with /api
@@ -126,9 +130,12 @@ const elements = {
   searchInput: document.getElementById('searchInput'),
   searchButton: document.getElementById('searchButton'),
   currentDateTime: document.getElementById('currentDateTime'),
-  itineraryStartTime: document.getElementById('itineraryStartTime'),
-  itineraryEndTime: document.getElementById('itineraryEndTime'),
-  itineraryStartPoint: document.getElementById('itineraryStartPoint'),
+  latestNewsList: document.getElementById('latestNewsList'),
+  tripOrigin: document.getElementById('tripOrigin'),
+  tripStartDate: document.getElementById('tripStartDate'),
+  tripStartTime: document.getElementById('tripStartTime'),
+  tripEndDate: document.getElementById('tripEndDate'),
+  tripEndTime: document.getElementById('tripEndTime'),
   generateItineraryButton: document.getElementById('generateItineraryButton'),
   itineraryResult: document.getElementById('itineraryResult'),
   regionFilter: document.getElementById('regionFilter'),
@@ -142,6 +149,28 @@ const elements = {
   assistantInput: document.getElementById('assistantInput'),
   assistantSend: document.getElementById('assistantSend'),
   assistantReply: document.getElementById('assistantReply')
+};
+
+// latest news pagination elements & state
+elements.newsPrev = document.getElementById('newsPrev');
+elements.newsNext = document.getElementById('newsNext');
+elements.newsDots = document.getElementById('newsDots');
+
+const latestNews = {
+  items: [],
+  pageSize: 3,
+  pageIndex: 0
+};
+
+// recommendation pagination elements
+elements.recommendPrev = document.getElementById('recommendPrev');
+elements.recommendNext = document.getElementById('recommendNext');
+elements.recommendDots = document.getElementById('recommendDots');
+
+const recommend = {
+  items: [],
+  pageSize: 6,
+  pageIndex: 0
 };
 
 function hydrateStaticAssets() {
@@ -176,15 +205,202 @@ function updateCurrentDateTime() {
   });
 }
 
-function updateNewsDates() {
-  const today = new Date();
+function formatNewsDate(value) {
+  if (!value) {
+    return '日期未知';
+  }
 
-  document.querySelectorAll('[data-news-offset]').forEach((element) => {
-    const offsetDays = Number.parseInt(element.dataset.newsOffset || '0', 10);
-    const displayDate = new Date(today);
-    displayDate.setDate(displayDate.getDate() - offsetDays);
-    element.textContent = formatDate(displayDate);
+  const parsedDate = new Date(value);
+  if (Number.isNaN(parsedDate.getTime())) {
+    return '日期未知';
+  }
+
+  return parsedDate.toLocaleDateString('zh-TW', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit'
   });
+}
+
+function truncateText(text, maxLength = 90) {
+  const cleanText = String(text || '').replace(/\s+/g, ' ').trim();
+  if (cleanText.length <= maxLength) {
+    return cleanText;
+  }
+
+  return `${cleanText.slice(0, maxLength)}…`;
+}
+
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function renderNewsItems(items) {
+  if (!elements.latestNewsList) {
+    return;
+  }
+
+  if (!items.length) {
+    elements.latestNewsList.innerHTML = `
+      <li class="news-loading">
+        <span class="news-date">無資料</span>
+        <p>目前沒有可顯示的最新消息。</p>
+      </li>
+    `;
+    return;
+  }
+
+  elements.latestNewsList.innerHTML = items.map((item) => {
+    const title = escapeHtml(truncateText(item.title, 70));
+    const summary = escapeHtml(truncateText(item.summary || '點擊查看完整內容。', 110));
+    const publishedAt = escapeHtml(formatNewsDate(item.published_at || item.publishedAt));
+    const link = escapeHtml(item.link || '#');
+
+    return `
+      <li>
+        <span class="news-date">${publishedAt}</span>
+        <a class="news-title" href="${link}" target="_blank" rel="noreferrer noopener">${title}</a>
+        <p class="news-summary">${summary}</p>
+      </li>
+    `;
+  }).join('');
+}
+
+function renderNewsPage() {
+  const items = latestNews.items || [];
+  const total = items.length;
+  const pages = Math.max(1, Math.ceil(total / latestNews.pageSize));
+  if (latestNews.pageIndex >= pages) latestNews.pageIndex = pages - 1;
+
+  const start = latestNews.pageIndex * latestNews.pageSize;
+  const end = start + latestNews.pageSize;
+  const pageItems = items.slice(start, end);
+
+  if (!elements.latestNewsList) return;
+  if (!pageItems.length) {
+    elements.latestNewsList.innerHTML = `
+      <li class="news-loading">
+        <span class="news-date">無資料</span>
+        <p>目前沒有可顯示的最新消息。</p>
+      </li>
+    `;
+  } else {
+    elements.latestNewsList.innerHTML = pageItems.map((item) => {
+      const title = escapeHtml(truncateText(item.title, 70));
+      const summary = escapeHtml(truncateText(item.summary || '點擊查看完整內容。', 110));
+      const publishedAt = escapeHtml(formatNewsDate(item.published_at || item.publishedAt));
+      const link = escapeHtml(item.link || '#');
+
+      return `
+        <li>
+          <span class="news-date">${publishedAt}</span>
+          <a class="news-title" href="${link}" target="_blank" rel="noreferrer noopener">${title}</a>
+          <p class="news-summary">${summary}</p>
+        </li>
+      `;
+    }).join('');
+  }
+
+  // update controls
+  updateNewsControls(pages);
+}
+
+function updateNewsControls(pages) {
+  if (elements.newsPrev) elements.newsPrev.disabled = latestNews.pageIndex <= 0;
+  if (elements.newsNext) elements.newsNext.disabled = latestNews.pageIndex >= pages - 1;
+
+  if (!elements.newsDots) return;
+  elements.newsDots.innerHTML = '';
+  for (let i = 0; i < pages; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'page-dot' + (i === latestNews.pageIndex ? ' active' : '');
+    dot.setAttribute('aria-label', `第 ${i + 1} 頁`);
+    dot.type = 'button';
+    dot.addEventListener('click', () => {
+      latestNews.pageIndex = i;
+      renderNewsPage();
+    });
+    elements.newsDots.appendChild(dot);
+  }
+}
+
+async function fetchLatestNews() {
+  // fetch up to 30 items (API caps at 30); we'll paginate client-side
+  const response = await fetch(apiUrl('/api/news/latest?limit=30'));
+  const payload = await response.json();
+
+  if (!response.ok || !payload.success) {
+    throw new Error(payload.error || '無法取得最新消息');
+  }
+
+  return payload.data || [];
+}
+
+async function refreshLatestNews() {
+  if (!elements.latestNewsList) {
+    return;
+  }
+
+  elements.latestNewsList.innerHTML = `
+    <li class="news-loading">
+      <span class="news-date">載入中...</span>
+      <p>正在抓取南投旅遊網最新消息。</p>
+    </li>
+  `;
+
+  try {
+    const newsItems = await fetchLatestNews();
+    latestNews.items = newsItems || [];
+    latestNews.pageIndex = 0;
+    renderNewsPage();
+  } catch (error) {
+    elements.latestNewsList.innerHTML = `
+      <li class="news-loading">
+        <span class="news-date">載入失敗</span>
+        <p>${escapeHtml(error.message || '請稍後再試')}</p>
+      </li>
+    `;
+  }
+}
+
+async function fetchFilters() {
+  try {
+    const res = await fetch(apiUrl('/api/filters'));
+    const payload = await res.json();
+    if (!res.ok || !payload.success) return;
+    const data = payload.data || {};
+
+    function populate(selectEl, items) {
+      if (!selectEl) return;
+      // keep "all" as first option
+      selectEl.innerHTML = '';
+      const allOpt = document.createElement('option');
+      allOpt.value = 'all';
+      allOpt.textContent = '全部';
+      selectEl.appendChild(allOpt);
+      (items || []).forEach((it) => {
+        const opt = document.createElement('option');
+        opt.value = it;
+        opt.textContent = it;
+        selectEl.appendChild(opt);
+      });
+    }
+
+    populate(elements.regionFilter, data.areas);
+    populate(elements.durationFilter, data.trip_lengths);
+    populate(elements.typeFilter, data.categories);
+    populate(elements.stayFilter, data.stay_types);
+    populate(elements.spaceFilter, data.indoor_outdoor);
+    populate(elements.budgetFilter, data.budgets);
+  } catch (e) {
+    // ignore, keep existing static options
+    console.warn('fetchFilters failed', e);
+  }
 }
 
 function setItineraryTimePreset() {
@@ -262,6 +478,25 @@ function createCard(activity) {
     elements.assistantInput.focus();
   });
 
+    // category badge
+    const badge = clone.querySelector('.category-badge');
+    if (badge) {
+      badge.textContent = activity.category || activity.activity_type || '';
+    }
+
+    // keywords
+    const kwContainer = clone.querySelector('.activity-keywords');
+    if (kwContainer) {
+      kwContainer.innerHTML = '';
+      const kws = (activity.keywords || '').split(',').map((k) => k.trim()).filter(Boolean).slice(0,4);
+      kws.forEach((k) => {
+        const chip = document.createElement('span');
+        chip.className = 'activity-tag kw';
+        chip.textContent = k;
+        kwContainer.appendChild(chip);
+      });
+    }
+
   return clone;
 }
 
@@ -289,6 +524,53 @@ function renderActivities(activities) {
   if (state.budget !== 'all') summaryParts.push(`預算：${state.budget}`);
 
   elements.filterSummary.textContent = summaryParts.length ? `目前條件：${summaryParts.join('、')}` : '目前顯示全部推薦活動';
+}
+
+function renderRecommendPage() {
+  const items = recommend.items || [];
+  const total = items.length;
+  const pages = Math.max(1, Math.ceil(total / recommend.pageSize));
+  if (recommend.pageIndex >= pages) recommend.pageIndex = pages - 1;
+
+  const start = recommend.pageIndex * recommend.pageSize;
+  const end = start + recommend.pageSize;
+  const pageItems = items.slice(start, end);
+
+  elements.grid.innerHTML = '';
+  if (!pageItems.length) {
+    elements.grid.innerHTML = `
+      <div class="empty-state">
+        <h4>目前沒有符合條件的活動</h4>
+        <p>請調整地區、行程長度、活動類型、活動停留時間或關鍵字後再試一次。</p>
+      </div>
+    `;
+  } else {
+    pageItems.forEach((activity) => elements.grid.appendChild(createCard(activity)));
+  }
+
+  // update controls
+  updateRecommendControls(pages);
+}
+
+function updateRecommendControls(pages) {
+  // prev/next
+  if (elements.recommendPrev) elements.recommendPrev.disabled = recommend.pageIndex <= 0;
+  if (elements.recommendNext) elements.recommendNext.disabled = recommend.pageIndex >= pages - 1;
+
+  // dots
+  if (!elements.recommendDots) return;
+  elements.recommendDots.innerHTML = '';
+  for (let i = 0; i < pages; i++) {
+    const dot = document.createElement('button');
+    dot.className = 'page-dot' + (i === recommend.pageIndex ? ' active' : '');
+    dot.setAttribute('aria-label', `第 ${i + 1} 頁`);
+    dot.type = 'button';
+    dot.addEventListener('click', () => {
+      recommend.pageIndex = i;
+      renderRecommendPage();
+    });
+    elements.recommendDots.appendChild(dot);
+  }
 }
 
 function renderItineraryPlaceholder(title, description) {
@@ -331,19 +613,24 @@ function renderItineraryItems(items) {
     return `
     <div class="itinerary-timeline">
       ${items.map((item) => {
-        const source = item.source || item.map_source || (item.type === 'meal' ? 'system' : 'system');
-        const sourceLabel = (source === 'google_maps') ? 'Google Maps 預估' : '系統預估';
-        const extra = item.distance_text ? `<span class="timeline-chip">${item.distance_text}</span>` : '';
+        const source = item.source || item.route_source || '系統估算';
+        const sourceLabel = source || '系統估算';
+        const routeText = item.duration_text || '目前使用系統估算車程';
+        const travelFrom = item.travel_from ? `${item.travel_from} → ${item.name || ''}` : '';
+        const addressText = item.address ? `<p class="timeline-address">地址：${item.address}</p>` : '';
+        const descriptionText = item.description ? `<p class="timeline-description">活動說明：${item.description}</p>` : '';
         return `
         <div class="timeline-item ${item.type === 'meal' ? 'meal' : ''}">
-          <div class="timeline-label">${item.type === 'meal' ? '午餐' : '景點'}</div>
+          <div class="timeline-label">${item.type === 'meal' ? (item.name || '午餐／休息') : '景點'}</div>
           <h4>${item.start_time} - ${item.end_time}｜${item.name}</h4>
+          ${addressText}
           <div class="timeline-meta">
             <span class="timeline-chip">停留 ${formatMinutes(item.stay_minutes)}</span>
-            <span class="timeline-chip">移動 ${formatMinutes(item.travel_minutes)}</span>
-            ${extra}
+            <span class="timeline-chip">車程 ${routeText}</span>
+            ${travelFrom ? `<span class="timeline-chip">${travelFrom}</span>` : ''}
             <span class="timeline-badge">${sourceLabel}</span>
           </div>
+          ${descriptionText}
           <p>${item.note || ''}</p>
         </div>
       `}).join('')}
@@ -374,17 +661,32 @@ function renderItineraryError(message, warnings = []) {
 }
 
 function buildItineraryPayload() {
+  // compose start/end datetime strings in format YYYY-MM-DD HH:MM
+  const today = new Date();
+  const pad = (v) => String(v).padStart(2, '0');
+  const defaultDate = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+  const startDate = elements.tripStartDate?.value || defaultDate;
+  const endDate = elements.tripEndDate?.value || startDate;
+  const startTime = elements.tripStartTime?.value || '09:00';
+  const endTime = elements.tripEndTime?.value || '17:00';
+  const startDatetime = `${startDate} ${startTime}`;
+  const endDatetime = `${endDate} ${endTime}`;
+
   return {
     area: state.region === 'all' ? '' : state.region,
     category: state.type === 'all' ? '' : state.type,
-    trip_length: state.duration === 'all' ? '一日' : state.duration,
+    trip_length: state.duration === 'all' ? '' : state.duration,
     stay_type: state.stay === 'all' ? '' : state.stay,
     indoor_outdoor: state.space === 'all' ? '' : state.space,
     budget: state.budget === 'all' ? '' : state.budget,
     keyword: state.keyword,
-    start_time: elements.itineraryStartTime?.value || '09:00',
-    end_time: elements.itineraryEndTime?.value || '17:00',
-    start_point: elements.itineraryStartPoint?.value?.trim() || '南投車站'
+    start_datetime: startDatetime,
+    end_datetime: endDatetime,
+    itinerary_length: state.duration === '半日' ? 'half_day' : 'full_day',
+    // keep backward-compatible start_point and optional origin coords
+    start_point: elements.tripOrigin?.value?.trim() || '',
+    origin_latitude: elements.originLatitude?.value || undefined,
+    origin_longitude: elements.originLongitude?.value || undefined,
   };
 }
 
@@ -432,7 +734,9 @@ async function refreshActivities() {
 
   try {
     const activities = await fetchSpots();
-    renderActivities(activities);
+    recommend.items = activities || [];
+    recommend.pageIndex = 0;
+    renderRecommendPage();
   } catch (error) {
     elements.grid.innerHTML = `
       <div class="empty-state">
@@ -449,7 +753,23 @@ function setActiveQuickTag(tagValue) {
   });
 }
 
-function getAssistantReply(inputText) {
+function bindSidebarNavigation() {
+  document.querySelectorAll('.nav-item').forEach((link) => {
+    link.addEventListener('click', (event) => {
+      const href = link.getAttribute('href');
+      const sectionId = href;
+      const section = sectionId ? document.querySelector(sectionId) : null;
+      if (!section) {
+        return;
+      }
+
+      event.preventDefault();
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+}
+
+function getAssistantReplyDemo(inputText) {
   const text = normalizeText(inputText);
   if (text.includes('不要戶外')) {
     return '09:00 茶園導覽、11:30 午餐、13:00 手作 DIY、15:30 回程';
@@ -463,11 +783,46 @@ function getAssistantReply(inputText) {
   return '09:00 活動起點、11:30 午餐、13:00 特色活動、15:30 回程';
 }
 
-function updateAssistantReply(inputText) {
+function renderAssistantResponse(role, response, sourceLabel) {
+  const responseText = response && typeof response === 'object' ? (response.text || '') : String(response || '');
+  const renderedMarkdown = window.marked ? window.marked.parse(responseText) : escapeHtml(responseText).replace(/\n/g, '<br>');
+
   elements.assistantReply.innerHTML = `
-    <span class="chat-role">系統</span>
-    <p>${getAssistantReply(inputText)}</p>
+    <span class="chat-role">${escapeHtml(role)}</span>
+    <div class="assistant-markdown">${renderedMarkdown}</div>
+    ${sourceLabel ? `<div class="assistant-source">來源：${escapeHtml(sourceLabel)}</div>` : ''}
   `;
+}
+
+function setAssistantLoading(isLoading) {
+  if (isLoading) {
+    elements.assistantReply.innerHTML = `
+      <span class="chat-role">系統</span>
+      <p>處理中…</p>
+    `;
+    elements.assistantSend.disabled = true;
+  } else {
+    elements.assistantSend.disabled = false;
+  }
+}
+
+async function callAssistantApi(payload) {
+  try {
+    const resp = await fetch(apiUrl('/api/assistant/message'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await resp.json();
+    if (!resp.ok || !data.success) {
+      throw new Error(data.error || 'Assistant API error');
+    }
+    // attempt to extract text
+    const text = data.text || (data.raw && data.raw.candidates && data.raw.candidates[0] && (data.raw.candidates[0].output || data.raw.candidates[0].content)) || '';
+    return { success: true, text: text, raw: data.raw };
+  } catch (e) {
+    return { success: false, error: e.message };
+  }
 }
 
 function bindEvents() {
@@ -559,14 +914,79 @@ function bindEvents() {
     });
   });
 
-  elements.assistantSend.addEventListener('click', () => {
-    updateAssistantReply(elements.assistantInput.value);
+  elements.assistantSend.addEventListener('click', async () => {
+    const message = elements.assistantInput.value || '';
+    const origin = elements.tripOrigin?.value?.trim() || null;
+    const startDate = elements.tripStartDate?.value || null;
+    const startTime = elements.tripStartTime?.value || null;
+    const endDate = elements.tripEndDate?.value || null;
+    const endTime = elements.tripEndTime?.value || null;
+    const hasTripForm = origin || startDate || startTime || endDate || endTime;
+
+    if (!message.trim() && !hasTripForm) {
+      renderAssistantResponse('系統', { text: '請輸入需求或填寫行程條件' }, '本地檢查');
+      return;
+    }
+
+    const finalMessage = message.trim() || '請依照以上出發資訊安排合適行程';
+
+    const payload = {
+      message: finalMessage,
+      origin,
+      date: startDate,
+      start_date: startDate,
+      start_time: startTime || '09:00',
+      end_date: endDate,
+      end_time: endTime,
+    };
+
+    setAssistantLoading(true);
+    const res = await callAssistantApi(payload);
+    setAssistantLoading(false);
+    if (res.success) {
+      renderAssistantResponse('系統', { text: res.text || getAssistantReplyDemo(finalMessage) }, 'Gemini');
+    } else {
+      // fallback to demo behavior
+      renderAssistantResponse('系統（離線模式）', { text: getAssistantReplyDemo(finalMessage) }, '本地範例');
+    }
   });
 
   elements.assistantInput.addEventListener('keydown', (event) => {
     if (event.key === 'Enter') {
       event.preventDefault();
-      updateAssistantReply(elements.assistantInput.value);
+      elements.assistantSend.click();
+    }
+  });
+
+  // pagination prev/next handlers
+  if (elements.recommendPrev) elements.recommendPrev.addEventListener('click', () => {
+    if (recommend.pageIndex > 0) {
+      recommend.pageIndex--;
+      renderRecommendPage();
+    }
+  });
+
+  if (elements.recommendNext) elements.recommendNext.addEventListener('click', () => {
+    const pages = Math.max(1, Math.ceil((recommend.items || []).length / recommend.pageSize));
+    if (recommend.pageIndex < pages - 1) {
+      recommend.pageIndex++;
+      renderRecommendPage();
+    }
+  });
+
+  // news pagination handlers
+  if (elements.newsPrev) elements.newsPrev.addEventListener('click', () => {
+    if (latestNews.pageIndex > 0) {
+      latestNews.pageIndex--;
+      renderNewsPage();
+    }
+  });
+
+  if (elements.newsNext) elements.newsNext.addEventListener('click', () => {
+    const pages = Math.max(1, Math.ceil((latestNews.items || []).length / latestNews.pageSize));
+    if (latestNews.pageIndex < pages - 1) {
+      latestNews.pageIndex++;
+      renderNewsPage();
     }
   });
 }
@@ -574,8 +994,17 @@ function bindEvents() {
 function init() {
   hydrateStaticAssets();
   updateCurrentDateTime();
-  updateNewsDates();
+  bindSidebarNavigation();
+  refreshLatestNews();
+  fetchFilters();
+  // initialize itinerary date inputs to today by default
+  const today = new Date();
+  const pad = (v) => String(v).padStart(2, '0');
+  const defaultDate = `${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+  if (elements.itineraryStartDate && !elements.itineraryStartDate.value) elements.itineraryStartDate.value = defaultDate;
+  if (elements.itineraryEndDate && !elements.itineraryEndDate.value) elements.itineraryEndDate.value = defaultDate;
   window.setInterval(updateCurrentDateTime, 60000);
+  window.setInterval(refreshLatestNews, 60 * 60 * 1000 * 12);
   setItineraryTimePreset();
   renderItineraryPlaceholder('尚未產生行程', '設定條件後，按下「產生行程」即可顯示半日或一日的排程時間表。');
   bindEvents();

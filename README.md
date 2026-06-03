@@ -18,22 +18,20 @@ python -m pip install -r backend/requirements.txt
 ```powershell
 cd backend
 python app.py
-# 伺服器會在 http://127.0.0.1:5003
+# 伺服器會在 http://127.0.0.1:5004
 ```
 
 3. 在瀏覽器打開前端 (同一台機器)：
- - 直接瀏覽 http://127.0.0.1:5003/ (Flask 會提供前端靜態檔案)
+ - 直接瀏覽 http://127.0.0.1:5004/ (Flask 會提供前端靜態檔案)
  - 或本機打開 frontend/index.html（注意：file:// 下同源限制會阻擋 API 呼叫）
 
 測試 API
-- 健康檢查: `GET http://127.0.0.1:5003/api/health`
-- 景點清單: `GET http://127.0.0.1:5003/api/spots`
 
 GitHub Pages（前端）
 1. 若要使用 GitHub Pages，兩種簡單方式：
   - 方法 A（推薦）：把 frontend/ 內容複製到 repo 的 `docs/` 資料夾並在 GitHub Pages 設定中選擇 `main branch /docs folder`。
   - 方法 B：使用 gh-pages branch，將 frontend/ 建立成靜態站並推到 gh-pages 分支。可以用 `gh-pages` 工具或手動。
-2. 注意 API_BASE：前端預設會在本機 (localhost) 使用 `http://127.0.0.1:5003`。上線時需在 index.html 中或在部署流程替換 `window.__API_BASE__`（例如在 GitHub Pages 的 index.html 直接加入 `<script>window.__API_BASE__='https://your-backend.example.com'</script>`）。
+2. 注意 API_BASE：前端預設會在本機 (localhost) 使用 `http://127.0.0.1:5004`。上線時需在 index.html 中或在部署流程替換 `window.__API_BASE__`（例如在 GitHub Pages 的 index.html 直接加入 `<script>window.__API_BASE__='https://your-backend.example.com'</script>`）。
 
 Render（後端）快速上線
 1. 在 Render 建立一個新的 Web Service，選擇連接到 GitHub repository。
@@ -51,9 +49,6 @@ Render（後端）快速上線
 3. 若跨域請求被阻擋：在後端設置 `CORS_ORIGINS` 為正確前端網域或 `*`，檢查瀏覽器 console 的 CORS 錯誤。
 
 常見排查項目
-- 若前端無法呼叫 API：檢查瀏覽器 console（錯誤類型、CORS）、Network（請求 URL 與狀態碼）。
-- 若後端出錯：檢查服務日誌（Render Logs 或 server stdout/stderr）。
-- 若使用 SQLite 在 Render：資料可能不持久化，請改用外部 DB。
 
 若要我幫忙：我可以替你把 `window.__API_BASE__` 直接內嵌到 `frontend/index.html`（上線前替換），或用 GitHub Actions 自動化部署到 gh-pages。請告訴我你要哪種流程。
 # 農村活動推薦系統 MVP
@@ -69,12 +64,7 @@ Render（後端）快速上線
 3. 啟動：
    `python app.py`
 4. 開啟瀏覽器：
-   `http://127.0.0.1:5003`
+   `http://127.0.0.1:5004`
 
 ## 目前包含
 
-- 網頁條件篩選
-- SQLite 景點資料庫
-- 有時間點的行程排程
-- 假車程計算
-- LINE 固定格式解析路由

@@ -1,6 +1,7 @@
 const spotListEl = document.getElementById('spot-list');
 const spotCountEl = document.getElementById('spot-count');
 const itineraryResultEl = document.getElementById('itinerary-result');
+const assistantResultEl = document.getElementById('assistant-result');
 const lineResultEl = document.getElementById('line-result');
 
 function formToQueryString(form) {
@@ -64,6 +65,19 @@ function renderItinerary(result) {
   `;
 }
 
+function renderAssistantResult(result) {
+  if (!assistantResultEl) {
+    return;
+  }
+
+  if (!result || !result.success) {
+    assistantResultEl.textContent = result?.error || '助理回覆失敗。';
+    return;
+  }
+
+  assistantResultEl.textContent = result.text || '沒有回覆內容。';
+}
+
 document.getElementById('filter-form').addEventListener('submit', async (event) => {
   event.preventDefault();
   await loadSpots(formToQueryString(event.currentTarget));
@@ -86,6 +100,32 @@ document.getElementById('itinerary-form').addEventListener('submit', async (even
   });
   const data = await response.json();
   renderItinerary(data);
+});
+
+document.getElementById('assistant-form').addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const formData = new FormData(event.currentTarget);
+  const preferences = formData.getAll('preferences');
+
+  const payload = {
+    message: formData.get('message') || '',
+    origin: formData.get('origin') || '',
+    date: formData.get('date') || '',
+    start_time: formData.get('start_time') || '',
+    end_date: formData.get('end_date') || '',
+    end_time: formData.get('end_time') || '',
+    trip_length: formData.get('trip_length') || '',
+    area: formData.get('area') || '',
+    preferences,
+  };
+
+  const response = await fetch('/api/assistant/message', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json();
+  renderAssistantResult(data);
 });
 
 document.getElementById('line-form').addEventListener('submit', async (event) => {

@@ -117,6 +117,56 @@
     </section>
 
     <section class="card">
+      <h2>智慧行程助理</h2>
+      <form id="assistant-form" class="grid-form">
+        <label class="full-width">問題 / 需求
+          <textarea name="message" rows="3" placeholder="例如：我從台中科技大學出發，想要半日親子行程。"></textarea>
+        </label>
+        <label>出發地址
+          <input name="origin" placeholder="例如：台中科技大學">
+        </label>
+        <label>日期
+          <input type="date" name="date">
+        </label>
+        <label>出發時間
+          <input type="time" name="start_time" value="09:00">
+        </label>
+        <label>結束日期
+          <input type="date" name="end_date">
+        </label>
+        <label>結束時間
+          <input type="time" name="end_time" value="17:00">
+        </label>
+        <label>行程長度
+          <select name="trip_length">
+            <option value="半日">半日</option>
+            <option value="一日">一日</option>
+          </select>
+        </label>
+        <label>地區
+          <select name="area">
+            <option value="不指定">不指定</option>
+            <option value="小半天">小半天</option>
+            <option value="大雁">大雁</option>
+            <option value="糯米橋">糯米橋</option>
+          </select>
+        </label>
+        <fieldset class="full-width assistant-preferences">
+          <legend>偏好</legend>
+          <label><input type="checkbox" name="preferences" value="親子"> 親子</label>
+          <label><input type="checkbox" name="preferences" value="戶外"> 戶外</label>
+          <label><input type="checkbox" name="preferences" value="室內"> 室內</label>
+          <label><input type="checkbox" name="preferences" value="DIY"> DIY</label>
+          <label><input type="checkbox" name="preferences" value="咖啡"> 咖啡</label>
+          <label><input type="checkbox" name="preferences" value="茶"> 茶</label>
+          <label><input type="checkbox" name="preferences" value="生態"> 生態</label>
+        </fieldset>
+        <button type="submit">送出助理需求</button>
+      </form>
+      <div id="assistant-result" class="result-box"></div>
+    </section>
+
+    <section class="card">
       <h2>LINE 固定格式測試</h2>
       <form id="line-form" class="grid-form">
         <label class="full-width">輸入文字

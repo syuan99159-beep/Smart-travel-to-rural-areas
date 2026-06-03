@@ -83,3 +83,17 @@ CREATE TABLE IF NOT EXISTS query_logs (
     result_json TEXT DEFAULT '{}',
     created_at TEXT NOT NULL
 );
+
+CREATE TABLE IF NOT EXISTS latest_news (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    link TEXT NOT NULL UNIQUE,
+    published_at TEXT NOT NULL,
+    summary TEXT DEFAULT '',
+    source TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    fetched_at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_latest_news_published_at ON latest_news(published_at DESC);
+CREATE INDEX IF NOT EXISTS idx_latest_news_sort_order ON latest_news(sort_order ASC);
